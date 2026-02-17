@@ -3,74 +3,107 @@ package progettothreadsgara;
 import java.util.Random;
 
 /**
- * Classe che rappresenta una macchina nella gara
+ * Rappresenta una macchina nella gara. Implementa Runnable: ogni macchina
+ * viene eseguita in un Thread separato e avanza in modo indipendente.
+ *
+ * VELOCITA':
+ * La velocità è determinata interamente da ModelloVeicolo (ritardoBase,
+ * variazioneRitardo, passoMinimo, passoMassimo). Il flag "tuned" è
+ * puramente visivo/informativo: non modifica le prestazioni.
+ *
+ * FLUSSO DEL THREAD (metodo run()):
+ *  1. Thread.sleep(ritardo) → simula il tempo di percorrenza
+ *  2. progresso += passo    → avanza di una percentuale casuale
+ *  3. barra.aggiornaValore() → aggiorna la GUI via invokeLater
+ *  4. Se progresso == 100  → notifica il GestoreGara
+ *
+ * PAROLA CHIAVE volatile:
+ * "progresso" è dichiarato volatile perché viene letto da altri thread
+ * (es. per statistiche). Garantisce che tutti vedano il valore aggiornato.
  */
-public class Macchine implements Runnable {
+public class Macchine implements java.lang.Runnable {
 
-    public enum TipoMacchina {
-        DA_CORSA, SLEEPER, SUV
+    // ─── Campi ────────────────────────────────────────────────────────────────
+    private final ModelloVeicolo modello;
+    private final boolean        tuned;         // solo estetico, non influenza velocità
+    private volatile int         progresso = 0; // volatile: visibile a tutti i thread
+    private final BarraGara      barra;
+    private final GestoreGara    gestoreGara;
+    private final Random         casuale = new Random();
+
+    // ─── Costruttore ──────────────────────────────────────────────────────────
+
+    /**
+     * @param modello     Il modello della macchina (determina velocità e immagine)
+     * @param tuned       True se la macchina è "tuned" (solo visivo, nessun bonus)
+     * @param barra       La barra grafica da aggiornare durante la gara
+     * @param gestoreGara Il gestore della gara da notificare al traguardo
+     */
+    public Macchine(ModelloVeicolo modello, boolean tuned,
+                    BarraGara barra, GestoreGara gestoreGara) {
+        this.modello      = modello;
+        this.tuned        = tuned;
+        this.barra        = barra;
+        this.gestoreGara  = gestoreGara;
     }
 
-    private TipoMacchina tipo;
-    private boolean tuned;
-    private String nome;
-    private int progresso;
-    private GuiBarra barra;
-    private Random random = new Random();
+    // ─── Thread: metodo principale ────────────────────────────────────────────
 
-    public Macchine(TipoMacchina tipo, boolean tuned, String nome, GuiBarra barra) {
-        this.tipo = tipo;
-        this.tuned = tuned;
-        this.nome = nome;
-        this.progresso = 0;
-        this.barra = barra;
-    }
-
+    /**
+     * Eseguito in parallelo per ogni macchina.
+     * Thread.sleep() può essere interrotto da gestoreGara.fermaGara()
+     * → in quel caso, InterruptedException ferma il ciclo pulitamente.
+     */
     @Override
     public void run() {
-        while (progresso < 100) {
+        while (progresso < 100 && !Thread.currentThread().isInterrupted()) {
             try {
-                // Simula il tempo di percorrenza basato sul tipo e se è tuned
-                int delay = calcolaDelay();
-                Thread.sleep(delay);
+                Thread.sleep(calcolaRitardo());
 
-                // Aggiorna progresso
-                progresso += random.nextInt(5) + 1; // Avanza di 1-5%
-                if (progresso > 100) progresso = 100;
+                // Calcola il passo di avanzamento casuale
+                int passo  = modello.getPassoMinimo()
+                           + casuale.nextInt(modello.getPassoMassimo() - modello.getPassoMinimo() + 1);
+                progresso  = Math.min(100, progresso + passo);
 
-                // Aggiorna la barra
-                barra.setProgresso(nome, progresso);
+                // Aggiorna la barra grafica (thread-safe via invokeLater in BarraGara)
+                barra.aggiornaValore(progresso);
+
+                if (progresso >= 100) {
+                    gestoreGara.notificaArrivo(this);
+                }
 
             } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-                break;
+                Thread.currentThread().interrupt(); // re-imposta il flag di interruzione
             }
         }
-        System.out.println(nome + " ha finito la gara!");
     }
 
-    private int calcolaDelay() {
-        int baseDelay = 100; // millisecondi base
-        switch (tipo) {
-            case DA_CORSA:
-                baseDelay = 50;
-                break;
-            case SLEEPER:
-                baseDelay = 150;
-                break;
-            case SUV:
-                baseDelay = 100;
-                break;
-        }
-        if (tuned) {
-            baseDelay -= 20; // Più veloce se tuned
-        }
-        return baseDelay + random.nextInt(50); // Aggiungi variabilità
-    }
+    // ─── Calcolo ritardo ──────────────────────────────────────────────────────
 
-    // Getters
-    public TipoMacchina getTipo() { return tipo; }
-    public boolean isTuned() { return tuned; }
-    public String getNome() { return nome; }
-    public int getProgresso() { return progresso; }
+    /**
+     * Calcola i millisecondi di attesa per questo passo.
+     * Formula: ritardoBase + casuale(0..variazioneRitardo)
+     * Math.max(10) garantisce almeno 10ms per non saturare la CPU.
+     */
+    private int calcolaRitardo() {
+    int ritardo = modello.getRitardoBase() + casuale.nextInt(modello.getVariazioneRitardo() + 1);
+    
+    // Se la macchina è tuned, riduciamo il ritardo (quindi aumenta la velocità)
+    if (tuned) {
+        ritardo = (int) (ritardo * 0.75); // 25% di velocità in più
+    }
+    
+    return Math.max(10, ritardo);
+}
+
+    // ─── Getter ───────────────────────────────────────────────────────────────
+
+    public ModelloVeicolo getModello()   { return modello; }
+    public boolean        isTuned()      { return tuned; }
+    public int            getProgresso() { return progresso; }
+
+    /** Nome completo: aggiunge "(Tuned)" se selezionato */
+    public String getNomeCompleto() {
+        return modello.getNome() + (tuned ? " (Tuned)" : "");
+    }
 }

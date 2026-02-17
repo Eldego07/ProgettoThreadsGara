@@ -1,22 +1,22 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Main.java to edit this template
- */
 package progettothreadsgara;
 
 /**
+ * Punto di ingresso dell'applicazione.
  *
- * @author casolaro.diego
+ * La GUI viene creata sull'Event Dispatch Thread (EDT) tramite invokeLater().
+ * Senza invokeLater, la finestra verrebbe creata sul thread main e potrebbe
+ * causare problemi di concorrenza con i componenti Swing.
  */
 public class ProgettoThreadsGara {
 
-    /**
-     * @param args the command line arguments
-     */
     public static void main(String[] args) {
-        java.awt.EventQueue.invokeLater(() -> {
-            new FRM_Gara().setVisible(true);
-        });
+        // Imposta il look and feel del sistema operativo
+        try {
+            javax.swing.UIManager.setLookAndFeel(
+                javax.swing.UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception ignorato) { }
+
+        // Crea e mostra la finestra sull'EDT
+        java.awt.EventQueue.invokeLater(() -> new FRM_Gara().setVisible(true));
     }
-    
 }

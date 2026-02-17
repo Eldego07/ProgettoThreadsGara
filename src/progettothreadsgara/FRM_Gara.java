@@ -1,170 +1,265 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
 package progettothreadsgara;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
+ * Frame principale dell'applicazione "Gara di Macchine".
  *
- * @author casolaro.diego
+ * RESPONSABILITA':
+ *  1. Costruire e mostrare l'interfaccia grafica
+ *  2. Raccogliere la configurazione dai PannelloConfigurazione
+ *  3. Creare le Macchine e passarle al GestoreGara
+ *  4. Implementare GestoreGara.AscoltatoreGara per ricevere notifiche
+ *  5. Aggiornare il log dei risultati
+ *
+ * NON si occupa di: logica dei thread, calcolo velocità, avanzamento.
+ * Quello è compito di Macchine e GestoreGara.
  */
-public class FRM_Gara extends javax.swing.JFrame {
-    
-    private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(FRM_Gara.class.getName());
+public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
 
-    // Componenti per le macchine
-    private JComboBox<String>[] comboTipi;
-    private JRadioButton[][] radioTuned; // [macchina][0=normal, 1=tuned]
-    private ButtonGroup[] buttonGroups;
-    private JProgressBar[] progressBars;
-    private JLabel[] labels;
-    private JButton btnStart;
-    private GuiBarra[] barre;
-    private Thread[] threads;
-    private Macchine[] macchine;
+    private static final int MIN_MACCHINE = 2;
+    private static final int MAX_MACCHINE = 6;
+    private static final int DEF_MACCHINE = 3;
 
-    /**
-     * Creates new form FRM_Gara
-     */
+    // ─── Componenti GUI ───────────────────────────────────────────────────────
+    private final List<PannelloConfigurazione> pannelliConfigurazione = new ArrayList<>();
+    private final List<BarraGara>              barre                  = new ArrayList<>();
+    private JPanel    pannelloConfig;
+    private JPanel    pannelloPista;
+    private JTextArea logRisultati;
+    private JSpinner  spnNumeroDiMacchine;
+    private JButton   btnPartenza;
+    private JButton   btnStop;
+
+    // ─── Logica ───────────────────────────────────────────────────────────────
+    private final GestoreGara gestoreGara = new GestoreGara();
+    private boolean garaInCorso = false;
+
+    // ─── Costruttore ──────────────────────────────────────────────────────────
+
     public FRM_Gara() {
-        initComponents();
-        setupGUI();
+        gestoreGara.setAscoltatore(this);
+        inizializzaInterfaccia();
+        aggiornaNumeroDiMacchine(DEF_MACCHINE);
     }
 
-    private void setupGUI() {
-        int numMacchine = 3;
-        comboTipi = new JComboBox[numMacchine];
-        radioTuned = new JRadioButton[numMacchine][2];
-        buttonGroups = new ButtonGroup[numMacchine];
-        progressBars = new JProgressBar[numMacchine];
-        labels = new JLabel[numMacchine];
-        barre = new GuiBarra[numMacchine];
-        threads = new Thread[numMacchine];
-        macchine = new Macchine[numMacchine];
+    // ─── Costruzione interfaccia ──────────────────────────────────────────────
 
-        setLayout(null); // Per posizionamento manuale
-        setSize(600, 400);
+    private void inizializzaInterfaccia() {
+        setTitle("Gara di Macchine - Progetto Thread");
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setSize(880, 580);
+        setMinimumSize(new Dimension(780, 480));
+        setLocationRelativeTo(null);
+        getContentPane().setBackground(Color.WHITE);
 
-        for (int i = 0; i < numMacchine; i++) {
-            // Combo box per tipo
-            comboTipi[i] = new JComboBox<>(new String[]{"Da Corsa", "Sleeper", "SUV"});
-            comboTipi[i].setBounds(50, 50 + i * 80, 100, 25);
-            add(comboTipi[i]);
+        JPanel radice = (JPanel) getContentPane();
+        radice.setLayout(new BorderLayout(8, 8));
+        radice.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
+        radice.setBackground(Color.WHITE);
 
-            // Radio buttons per tuned
-            buttonGroups[i] = new ButtonGroup();
-            radioTuned[i][0] = new JRadioButton("Normale");
-            radioTuned[i][1] = new JRadioButton("Tuned");
-            radioTuned[i][0].setSelected(true); // Default normale
-            buttonGroups[i].add(radioTuned[i][0]);
-            buttonGroups[i].add(radioTuned[i][1]);
-            radioTuned[i][0].setBounds(160, 50 + i * 80, 80, 25);
-            radioTuned[i][1].setBounds(240, 50 + i * 80, 80, 25);
-            add(radioTuned[i][0]);
-            add(radioTuned[i][1]);
+        // ── Pannello sinistro (configurazione + pista) ────────────────────────
+        JPanel pnlSinistra = new JPanel(new BorderLayout(0, 6));
+        pnlSinistra.setBackground(Color.WHITE);
+        radice.add(pnlSinistra, BorderLayout.CENTER);
 
-            // Progress bar
-            progressBars[i] = new JProgressBar(0, 100);
-            progressBars[i].setBounds(50, 80 + i * 80, 300, 20);
-            add(progressBars[i]);
+        // Sezione configurazione (in alto a sinistra)
+        pannelloConfig = new JPanel();
+        pannelloConfig.setLayout(new BoxLayout(pannelloConfig, BoxLayout.Y_AXIS));
+        pannelloConfig.setBackground(Color.WHITE);
+        pannelloConfig.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(new Color(180, 180, 180)),
+            "Configura Macchine",
+            javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
+            javax.swing.border.TitledBorder.DEFAULT_POSITION,
+            new Font("Arial", Font.BOLD, 12)));
 
-            // Label
-            labels[i] = new JLabel("Macchina " + (i+1) + ": 0%");
-            labels[i].setBounds(360, 80 + i * 80, 150, 20);
-            add(labels[i]);
+        JScrollPane scrollConfig = new JScrollPane(pannelloConfig);
+        scrollConfig.setBorder(null);
+        scrollConfig.setPreferredSize(new Dimension(0, 190));
+        scrollConfig.getViewport().setBackground(Color.WHITE);
+        pnlSinistra.add(scrollConfig, BorderLayout.NORTH);
 
-            barre[i] = new GuiBarra(progressBars[i], labels[i]);
+        // Sezione pista (barre di avanzamento, in basso a sinistra)
+        pannelloPista = new JPanel();
+        pannelloPista.setLayout(new BoxLayout(pannelloPista, BoxLayout.Y_AXIS));
+        pannelloPista.setBackground(Color.WHITE);
+        pannelloPista.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(new Color(180, 180, 180)),
+            "Pista",
+            javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
+            javax.swing.border.TitledBorder.DEFAULT_POSITION,
+            new Font("Arial", Font.BOLD, 12)));
+
+        JScrollPane scrollPista = new JScrollPane(pannelloPista);
+        scrollPista.setBorder(null);
+        scrollPista.getViewport().setBackground(Color.WHITE);
+        pnlSinistra.add(scrollPista, BorderLayout.CENTER);
+
+        // ── Pannello destro (log + controlli) ─────────────────────────────────
+        JPanel pnlDestra = costruisciPannelloDestra();
+        pnlDestra.setPreferredSize(new Dimension(225, 0));
+        radice.add(pnlDestra, BorderLayout.EAST);
+    }
+
+    private JPanel costruisciPannelloDestra() {
+        JPanel pnl = new JPanel(new BorderLayout(0, 8));
+        pnl.setBackground(Color.WHITE);
+
+        // ── Spinner numero macchine ───────────────────────────────────────────
+        JPanel pnlAlto = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 4));
+        pnlAlto.setBackground(Color.WHITE);
+        JLabel lbl = new JLabel("Num. Macchine:");
+        lbl.setFont(new Font("Arial", Font.BOLD, 12));
+        pnlAlto.add(lbl);
+        spnNumeroDiMacchine = new JSpinner(
+            new SpinnerNumberModel(DEF_MACCHINE, MIN_MACCHINE, MAX_MACCHINE, 1));
+        spnNumeroDiMacchine.setPreferredSize(new Dimension(55, 24));
+        spnNumeroDiMacchine.addChangeListener(e -> {
+            if (!garaInCorso)
+                aggiornaNumeroDiMacchine((int) spnNumeroDiMacchine.getValue());
+        });
+        pnlAlto.add(spnNumeroDiMacchine);
+        pnl.add(pnlAlto, BorderLayout.NORTH);
+
+        // ── Log risultati ─────────────────────────────────────────────────────
+        logRisultati = new JTextArea("Configura le macchine e\npremi Partenza!\n");
+        logRisultati.setEditable(false);
+        logRisultati.setFont(new Font("Courier New", Font.PLAIN, 12));
+        logRisultati.setBackground(new Color(248, 248, 248));
+        logRisultati.setBorder(BorderFactory.createEmptyBorder(4, 6, 4, 6));
+        JScrollPane scrollLog = new JScrollPane(logRisultati);
+        scrollLog.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
+        pnl.add(scrollLog, BorderLayout.CENTER);
+
+        // ── Bottoni ───────────────────────────────────────────────────────────
+        JPanel pnlBottoni = new JPanel(new GridLayout(2, 1, 0, 6));
+        pnlBottoni.setBackground(Color.WHITE);
+        btnPartenza = bottoneColorato("Partenza!", new Color(0, 150, 70), Color.BLACK);
+        btnPartenza.addActionListener(this::alClickPartenza);
+        btnStop     = bottoneColorato("Stop",      new Color(200, 40,  40), Color.BLACK);
+        btnStop.setEnabled(false);
+        btnStop.addActionListener(e -> fermaGara());
+        pnlBottoni.add(btnPartenza);
+        pnlBottoni.add(btnStop);
+        pnl.add(pnlBottoni, BorderLayout.SOUTH);
+
+        return pnl;
+    }
+
+    // ─── Gestione numero macchine ─────────────────────────────────────────────
+
+    private void aggiornaNumeroDiMacchine(int numero) {
+        pannelliConfigurazione.clear();
+        pannelloConfig.removeAll();
+        for (int i = 0; i < numero; i++) {
+            PannelloConfigurazione pnl = new PannelloConfigurazione(i + 1);
+            pannelliConfigurazione.add(pnl);
+            pannelloConfig.add(pnl);
+        }
+        pannelloConfig.revalidate();
+        pannelloConfig.repaint();
+    }
+
+    // ─── Gestione eventi ──────────────────────────────────────────────────────
+
+    private void alClickPartenza(ActionEvent e) {
+        if (garaInCorso) return;
+
+        gestoreGara.resetta();
+        barre.clear();
+        pannelloPista.removeAll();
+        logRisultati.setText("Gara iniziata!\n\n");
+
+        for (PannelloConfigurazione cfg : pannelliConfigurazione) {
+            ModelloVeicolo modello = cfg.getModelloSelezionato();
+            if (modello == null) continue;
+            boolean tuned = cfg.isTuned();
+
+            BarraGara barra = new BarraGara(modello, tuned);
+            barra.setMaximumSize(new Dimension(Integer.MAX_VALUE, 60));
+            barre.add(barra);
+            pannelloPista.add(barra);
+            pannelloPista.add(Box.createVerticalStrut(4));
+
+            Macchine macchina = new Macchine(modello, tuned, barra, gestoreGara);
+            gestoreGara.aggiungeMacchina(macchina);
         }
 
-        // Bottone start
-        btnStart = new JButton("Inizia Gara");
-        btnStart.setBounds(200, 320, 100, 30);
-        btnStart.addActionListener(this::btnStartActionPerformed);
-        add(btnStart);
+        pannelloPista.revalidate();
+        pannelloPista.repaint();
+
+        setConfigurazioneAbilitata(false);
+        btnPartenza.setEnabled(false);
+        btnStop.setEnabled(true);
+        spnNumeroDiMacchine.setEnabled(false);
+        garaInCorso = true;
+
+        gestoreGara.avviaGara();
     }
 
-    private void btnStartActionPerformed(java.awt.event.ActionEvent evt) {
-        // Crea le macchine
-        for (int i = 0; i < 3; i++) {
-            String tipoStr = (String) comboTipi[i].getSelectedItem();
-            Macchine.TipoMacchina tipo;
-            switch (tipoStr) {
-                case "Da Corsa":
-                    tipo = Macchine.TipoMacchina.DA_CORSA;
-                    break;
-                case "Sleeper":
-                    tipo = Macchine.TipoMacchina.SLEEPER;
-                    break;
-                default:
-                    tipo = Macchine.TipoMacchina.SUV;
-                    break;
+    private void fermaGara() {
+        gestoreGara.fermaGara();
+        garaInCorso = false;
+        aggiungiLog("Gara interrotta.\n");
+        ripristinaControlli();
+    }
+
+    // ─── Implementazione AscoltatoreGara ──────────────────────────────────────
+
+    @Override
+    public void alTermineMacchina(String nome, int posizione) {
+        String pos = posizione == 1 ? "1°" : posizione == 2 ? "2°" : posizione == 3 ? "3°" : posizione + "°";
+        SwingUtilities.invokeLater(() -> logRisultati.append(pos + " - " + nome + "\n"));
+    }
+
+    @Override
+    public void alTermineGara(List<String> risultatiFinali) {
+        SwingUtilities.invokeLater(() -> {
+            garaInCorso = false;
+            logRisultati.append("\nGara completata!\n");
+            ripristinaControlli();
+            if (!risultatiFinali.isEmpty()) {
+                String vincitore = risultatiFinali.get(0).replaceFirst("^1 posto - ", "");
+                // Unico uso di Unicode/emoji: la coppa nel dialogo del vincitore
+                JOptionPane.showMessageDialog(this,
+                    "\uD83C\uDFC6 Vincitore: " + vincitore,
+                    "Gara Terminata",
+                    JOptionPane.INFORMATION_MESSAGE);
             }
-            boolean tuned = radioTuned[i][1].isSelected();
-            macchine[i] = new Macchine(tipo, tuned, "Macchina " + (i+1), barre[i]);
-            threads[i] = new Thread((java.lang.Runnable) (Runnable) macchine[i]);
-        }
-
-        // Avvia i thread
-        for (Thread t : threads) {
-            t.start();
-        }
-
-        btnStart.setEnabled(false);
+        });
     }
 
-    /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
-     */
-    @SuppressWarnings("unchecked")
-    // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
-    private void initComponents() {
+    // ─── Metodi di supporto ───────────────────────────────────────────────────
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
-
-        javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
-        getContentPane().setLayout(layout);
-        layout.setHorizontalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
-        );
-        layout.setVerticalGroup(
-            layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
-        );
-
-        pack();
-    }// </editor-fold>//GEN-END:initComponents
-
-    /**
-     * @param args the command line arguments
-     */
-    public static void main(String args[]) {
-        /* Set the Nimbus look and feel */
-        //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
-        /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
-         * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
-         */
-        try {
-            for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) {
-                    javax.swing.UIManager.setLookAndFeel(info.getClassName());
-                    break;
-                }
-            }
-        } catch (ReflectiveOperationException | javax.swing.UnsupportedLookAndFeelException ex) {
-            logger.log(java.util.logging.Level.SEVERE, null, ex);
-        }
-        //</editor-fold>
-
-        /* Create and display the form */
-        java.awt.EventQueue.invokeLater(() -> new FRM_Gara().setVisible(true));
+    private void aggiungiLog(String messaggio) {
+        SwingUtilities.invokeLater(() -> logRisultati.append(messaggio));
     }
 
-    // Variables declaration - do not modify//GEN-BEGIN:variables
-    // End of variables declaration//GEN-END:variables
+    private void setConfigurazioneAbilitata(boolean abilitata) {
+        for (PannelloConfigurazione pnl : pannelliConfigurazione)
+            pnl.setTuttoAbilitato(abilitata);
+    }
+
+    private void ripristinaControlli() {
+        setConfigurazioneAbilitata(true);
+        btnPartenza.setEnabled(true);
+        btnPartenza.setText("Nuova Gara");
+        btnStop.setEnabled(false);
+        spnNumeroDiMacchine.setEnabled(true);
+    }
+
+    private JButton bottoneColorato(String testo, Color sfondo, Color testColor) {
+        JButton b = new JButton(testo);
+        b.setBackground(sfondo);
+        b.setForeground(testColor);
+        b.setFont(new Font("Arial", Font.BOLD, 13));
+        b.setFocusPainted(false);
+        b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        return b;
+    }
 }
