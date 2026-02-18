@@ -3,31 +3,7 @@ package progettothreadsgara;
 import java.awt.Color;
 import java.util.Arrays;
 
-/**
- * Ogni modello ha la propria velocità basata sulle prestazioni reali della vettura.
- * La categoria serve solo per il raggruppamento nella ComboBox a cascata.
- *
- * VELOCITA' REALI (0-100 km/h di riferimento):
- *  Bugatti Chiron    : 2.4s → ritardoBase=25
- *  McLaren P1        : 2.8s → ritardoBase=30
- *  Lamborghini Huracan: 2.9s → ritardoBase=32
- *  Ferrari F40       : 3.8s → ritardoBase=38
- *  Porsche Cayenne T : 3.9s → ritardoBase=40
- *  BMW X5 M          : 3.9s → ritardoBase=42
- *  Ford Focus RS     : 4.7s → ritardoBase=50
- *  Subaru WRX        : 4.8s → ritardoBase=52
- *  Honda Civic Type R: 5.4s → ritardoBase=58
- *  Range Rover Sport : 5.5s → ritardoBase=60
- *  VW Golf GTI       : 6.3s → ritardoBase=68
- *  Jeep Wrangler     : 8.9s → ritardoBase=92
- *
- * Parametri:
- *  ritardoBase      = ms base tra un avanzamento e l'altro (meno = più veloce)
- *  variazioneRitardo = variabilità casuale aggiunta al base (0..variazioneRitardo ms)
- *  passoMinimo       = % minima di avanzamento per passo
- *  passoMassimo      = % massima di avanzamento per passo
- *  nomeFile          = nome del file immagine in /Immagini/
- */
+
 public enum ModelloVeicolo {
 
     // ── Auto da Corsa ─────────────── nome                        categoria              colore                   base var min max  file immagine

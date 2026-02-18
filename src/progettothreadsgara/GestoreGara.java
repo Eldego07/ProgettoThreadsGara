@@ -4,24 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * Gestisce il ciclo di vita della gara: crea i Thread, li avvia,
- * traccia l'ordine di arrivo e notifica la GUI.
- *
- * PATTERN OBSERVER:
- * Comunica con la GUI tramite l'interfaccia AscoltatoreGara.
- * Il GestoreGara non conosce nulla dell'interfaccia grafica.
- * La GUI si registra con setAscoltatore() e riceve le notifiche.
- *
- * THREAD SAFETY:
- * - notificaArrivo() è synchronized: più macchine possono arrivare
- *   quasi nello stesso istante, ma solo una alla volta ottiene la posizione.
- * - posizioneArrivo è AtomicInteger: l'operazione incrementAndGet()
- *   è atomica (lettura + incremento + scrittura in un solo passaggio).
- */
-public class GestoreGara {
 
-    // ─── Interfaccia Observer ─────────────────────────────────────────────────
+public class GestoreGara {
 
     /**
      * Interfaccia implementata da FRM_Gara per ricevere notifiche dalla gara.
@@ -33,14 +17,12 @@ public class GestoreGara {
         void alTermineGara(List<String> risultatiFinali);
     }
 
-    // ─── Campi ────────────────────────────────────────────────────────────────
     private final List<Macchine>  macchine       = new ArrayList<>();
     private final List<Thread>    thread         = new ArrayList<>();
     private final AtomicInteger   posizioneArrivo = new AtomicInteger(0);
     private final List<String>    risultati       = new ArrayList<>();
     private AscoltatoreGara       ascoltatore;
 
-    // ─── API pubblica ─────────────────────────────────────────────────────────
 
     /** Registra l'ascoltatore (solitamente FRM_Gara) */
     public void setAscoltatore(AscoltatoreGara a) { this.ascoltatore = a; }

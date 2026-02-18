@@ -2,28 +2,9 @@ package progettothreadsgara;
 
 import java.util.Random;
 
-/**
- * Rappresenta una macchina nella gara. Implementa Runnable: ogni macchina
- * viene eseguita in un Thread separato e avanza in modo indipendente.
- *
- * VELOCITA':
- * La velocità è determinata interamente da ModelloVeicolo (ritardoBase,
- * variazioneRitardo, passoMinimo, passoMassimo). Il flag "tuned" è
- * puramente visivo/informativo: non modifica le prestazioni.
- *
- * FLUSSO DEL THREAD (metodo run()):
- *  1. Thread.sleep(ritardo) → simula il tempo di percorrenza
- *  2. progresso += passo    → avanza di una percentuale casuale
- *  3. barra.aggiornaValore() → aggiorna la GUI via invokeLater
- *  4. Se progresso == 100  → notifica il GestoreGara
- *
- * PAROLA CHIAVE volatile:
- * "progresso" è dichiarato volatile perché viene letto da altri thread
- * (es. per statistiche). Garantisce che tutti vedano il valore aggiornato.
- */
+
 public class Macchine implements java.lang.Runnable {
 
-    // ─── Campi ────────────────────────────────────────────────────────────────
     private final ModelloVeicolo modello;
     private final boolean        tuned;         // solo estetico, non influenza velocità
     private volatile int         progresso = 0; // volatile: visibile a tutti i thread
@@ -31,7 +12,6 @@ public class Macchine implements java.lang.Runnable {
     private final GestoreGara    gestoreGara;
     private final Random         casuale = new Random();
 
-    // ─── Costruttore ──────────────────────────────────────────────────────────
 
     /**
      * @param modello     Il modello della macchina (determina velocità e immagine)
@@ -39,15 +19,13 @@ public class Macchine implements java.lang.Runnable {
      * @param barra       La barra grafica da aggiornare durante la gara
      * @param gestoreGara Il gestore della gara da notificare al traguardo
      */
-    public Macchine(ModelloVeicolo modello, boolean tuned,
-                    BarraGara barra, GestoreGara gestoreGara) {
+    public Macchine(ModelloVeicolo modello, boolean tuned, BarraGara barra, GestoreGara gestoreGara) {
         this.modello      = modello;
         this.tuned        = tuned;
         this.barra        = barra;
         this.gestoreGara  = gestoreGara;
     }
 
-    // ─── Thread: metodo principale ────────────────────────────────────────────
 
     /**
      * Eseguito in parallelo per ogni macchina.
@@ -78,8 +56,6 @@ public class Macchine implements java.lang.Runnable {
         }
     }
 
-    // ─── Calcolo ritardo ──────────────────────────────────────────────────────
-
     /**
      * Calcola i millisecondi di attesa per questo passo.
      * Formula: ritardoBase + casuale(0..variazioneRitardo)
@@ -96,7 +72,6 @@ public class Macchine implements java.lang.Runnable {
     return Math.max(10, ritardo);
 }
 
-    // ─── Getter ───────────────────────────────────────────────────────────────
 
     public ModelloVeicolo getModello()   { return modello; }
     public boolean        isTuned()      { return tuned; }

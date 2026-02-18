@@ -6,26 +6,13 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Frame principale dell'applicazione "Gara di Macchine".
- *
- * RESPONSABILITA':
- *  1. Costruire e mostrare l'interfaccia grafica
- *  2. Raccogliere la configurazione dai PannelloConfigurazione
- *  3. Creare le Macchine e passarle al GestoreGara
- *  4. Implementare GestoreGara.AscoltatoreGara per ricevere notifiche
- *  5. Aggiornare il log dei risultati
- *
- * NON si occupa di: logica dei thread, calcolo velocità, avanzamento.
- * Quello è compito di Macchine e GestoreGara.
- */
+
 public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
 
     private static final int MIN_MACCHINE = 2;
     private static final int MAX_MACCHINE = 6;
     private static final int DEF_MACCHINE = 3;
 
-    // ─── Componenti GUI ───────────────────────────────────────────────────────
     private final List<PannelloConfigurazione> pannelliConfigurazione = new ArrayList<>();
     private final List<BarraGara>              barre                  = new ArrayList<>();
     private JPanel    pannelloConfig;
@@ -35,11 +22,9 @@ public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
     private JButton   btnPartenza;
     private JButton   btnStop;
 
-    // ─── Logica ───────────────────────────────────────────────────────────────
     private final GestoreGara gestoreGara = new GestoreGara();
     private boolean garaInCorso = false;
 
-    // ─── Costruttore ──────────────────────────────────────────────────────────
 
     public FRM_Gara() {
         gestoreGara.setAscoltatore(this);
@@ -47,7 +32,6 @@ public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
         aggiornaNumeroDiMacchine(DEF_MACCHINE);
     }
 
-    // ─── Costruzione interfaccia ──────────────────────────────────────────────
 
     private void inizializzaInterfaccia() {
         setTitle("Gara di Macchine - Progetto Thread");
@@ -62,7 +46,6 @@ public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
         radice.setBorder(BorderFactory.createEmptyBorder(8, 8, 8, 8));
         radice.setBackground(Color.WHITE);
 
-        // ── Pannello sinistro (configurazione + pista) ────────────────────────
         JPanel pnlSinistra = new JPanel(new BorderLayout(0, 6));
         pnlSinistra.setBackground(Color.WHITE);
         radice.add(pnlSinistra, BorderLayout.CENTER);
@@ -100,7 +83,6 @@ public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
         scrollPista.getViewport().setBackground(Color.WHITE);
         pnlSinistra.add(scrollPista, BorderLayout.CENTER);
 
-        // ── Pannello destro (log + controlli) ─────────────────────────────────
         JPanel pnlDestra = costruisciPannelloDestra();
         pnlDestra.setPreferredSize(new Dimension(225, 0));
         radice.add(pnlDestra, BorderLayout.EAST);
@@ -110,7 +92,6 @@ public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
         JPanel pnl = new JPanel(new BorderLayout(0, 8));
         pnl.setBackground(Color.WHITE);
 
-        // ── Spinner numero macchine ───────────────────────────────────────────
         JPanel pnlAlto = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 4));
         pnlAlto.setBackground(Color.WHITE);
         JLabel lbl = new JLabel("Num. Macchine:");
@@ -126,7 +107,6 @@ public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
         pnlAlto.add(spnNumeroDiMacchine);
         pnl.add(pnlAlto, BorderLayout.NORTH);
 
-        // ── Log risultati ─────────────────────────────────────────────────────
         logRisultati = new JTextArea("Configura le macchine e\npremi Partenza!\n");
         logRisultati.setEditable(false);
         logRisultati.setFont(new Font("Courier New", Font.PLAIN, 12));
@@ -136,7 +116,6 @@ public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
         scrollLog.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200)));
         pnl.add(scrollLog, BorderLayout.CENTER);
 
-        // ── Bottoni ───────────────────────────────────────────────────────────
         JPanel pnlBottoni = new JPanel(new GridLayout(2, 1, 0, 6));
         pnlBottoni.setBackground(Color.WHITE);
         btnPartenza = bottoneColorato("Partenza!", new Color(0, 150, 70), Color.BLACK);
@@ -151,7 +130,6 @@ public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
         return pnl;
     }
 
-    // ─── Gestione numero macchine ─────────────────────────────────────────────
 
     private void aggiornaNumeroDiMacchine(int numero) {
         pannelliConfigurazione.clear();
@@ -165,7 +143,6 @@ public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
         pannelloConfig.repaint();
     }
 
-    // ─── Gestione eventi ──────────────────────────────────────────────────────
 
     private void alClickPartenza(ActionEvent e) {
         if (garaInCorso) return;
@@ -209,7 +186,6 @@ public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
         ripristinaControlli();
     }
 
-    // ─── Implementazione AscoltatoreGara ──────────────────────────────────────
 
     @Override
     public void alTermineMacchina(String nome, int posizione) {
@@ -234,7 +210,6 @@ public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
         });
     }
 
-    // ─── Metodi di supporto ───────────────────────────────────────────────────
 
     private void aggiungiLog(String messaggio) {
         SwingUtilities.invokeLater(() -> logRisultati.append(messaggio));

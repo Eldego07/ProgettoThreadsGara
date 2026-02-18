@@ -5,26 +5,6 @@ import javax.swing.SwingUtilities;
 import java.awt.*;
 import java.net.URL;
 
-/**
- * Barra di avanzamento personalizzata con l'immagine della macchina
- * che si sposta insieme al bordo destro della barra colorata.
- *
- * COME FUNZIONA (pitturaComponente / paintComponent):
- *  1. Disegna la barra grigia di sfondo
- *  2. Disegna la barra colorata da 0 fino a (larghezza * progresso/100)
- *  3. Disegna il nome della macchina centrato nella parte colorata
- *  4. Disegna l'immagine della macchina all'estremità destra della barra colorata
- *     → l'immagine si muove con il progresso esattamente come i ciclisti
- *
- * CARICAMENTO IMMAGINI:
- *  Le immagini vengono caricate da /Immagini/<nomeFile> nel classpath.
- *  In NetBeans, metti i PNG in src/Immagini/ e verranno copiati nell'output.
- *  Se l'immagine non viene trovata, viene usata una sagoma di riserva.
- *
- * THREAD SAFETY:
- *  aggiornaValore() usa SwingUtilities.invokeLater() perché viene chiamato
- *  dai thread delle macchine, non dall'EDT di Swing.
- */
 public class BarraGara extends JPanel {
 
     // Larghezza riservata all'immagine a destra della barra
@@ -37,7 +17,6 @@ public class BarraGara extends JPanel {
     private String  etichetta;            // nome della macchina
     private Image   immagineMacchina;     // immagine caricata dal classpath
 
-    // ─── Costruttore ──────────────────────────────────────────────────────────
 
     /**
      * @param modello Il modello della macchina (determina colore, nome e immagine)
@@ -54,7 +33,6 @@ public class BarraGara extends JPanel {
         caricaImmagine(modello.getNomeFile());
     }
 
-    // ─── Caricamento immagine ─────────────────────────────────────────────────
 
     /**
      * Carica l'immagine dal classpath in /Immagini/<nomeFile>.
@@ -76,7 +54,6 @@ public class BarraGara extends JPanel {
         }
     }
 
-    // ─── API pubblica (chiamata dai thread) ───────────────────────────────────
 
     /**
      * Aggiorna il valore e ridisegna la barra.
@@ -99,8 +76,6 @@ public class BarraGara extends JPanel {
             repaint();
         });
     }
-
-    // ─── Rendering ────────────────────────────────────────────────────────────
 
     /**
      * Disegna l'intera barra + immagine mobile della macchina.

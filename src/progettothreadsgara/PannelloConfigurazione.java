@@ -21,13 +21,11 @@ public class PannelloConfigurazione extends JPanel {
         setLayout(new FlowLayout(FlowLayout.LEFT, 6, 4));
         setBackground(Color.WHITE);
 
-        // ── Etichetta numero ──────────────────────────────────────────────────
         JLabel etichetta = new JLabel("Macchina " + numero + ":");
         etichetta.setFont(new Font("Arial", Font.BOLD, 12));
         etichetta.setPreferredSize(new Dimension(80, 24));
         add(etichetta);
 
-        // ── ComboBox Categoria ────────────────────────────────────────────────
         cbCategoria = new JComboBox<>(CategoriaVeicolo.values());
         cbCategoria.setPreferredSize(new Dimension(115, 24));
         cbCategoria.setFont(new Font("Arial", Font.PLAIN, 12));
@@ -41,8 +39,7 @@ public class PannelloConfigurazione extends JPanel {
             }
         });
         add(cbCategoria);
-
-        // ── ComboBox Modello ──────────────────────────────────────────────────
+        
         cbModello = new JComboBox<>();
         cbModello.setPreferredSize(new Dimension(190, 24));
         cbModello.setFont(new Font("Arial", Font.PLAIN, 12));
@@ -51,7 +48,6 @@ public class PannelloConfigurazione extends JPanel {
         cbCategoria.addActionListener(e -> popolaModelli());
         add(cbModello);
 
-        // ── Radio Normale / Tuned ─────────────────────────────────────────────
         rbNormale = new JRadioButton("Normale");
         rbTuned   = new JRadioButton("Tuned");
         rbNormale.setSelected(true);
@@ -66,7 +62,6 @@ public class PannelloConfigurazione extends JPanel {
         add(rbTuned);
     }
 
-    // ─── Metodi ───────────────────────────────────────────────────────────────
 
     /** Popola la ComboBox dei modelli in base alla categoria selezionata */
     private void popolaModelli() {
