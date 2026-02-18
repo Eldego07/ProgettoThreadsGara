@@ -6,7 +6,6 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-
 public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
 
     private static final int MIN_MACCHINE = 2;
@@ -14,24 +13,22 @@ public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
     private static final int DEF_MACCHINE = 3;
 
     private final List<PannelloConfigurazione> pannelliConfigurazione = new ArrayList<>();
-    private final List<BarraGara>              barre                  = new ArrayList<>();
-    private JPanel    pannelloConfig;
-    private JPanel    pannelloPista;
+    private final List<BarraGara> barre = new ArrayList<>();
+    private JPanel pannelloConfig;
+    private JPanel pannelloPista;
     private JTextArea logRisultati;
-    private JSpinner  spnNumeroDiMacchine;
-    private JButton   btnPartenza;
-    private JButton   btnStop;
+    private JSpinner spnNumeroDiMacchine;
+    private JButton btnPartenza;
+    private JButton btnStop;
 
     private final GestoreGara gestoreGara = new GestoreGara();
     private boolean garaInCorso = false;
-
 
     public FRM_Gara() {
         gestoreGara.setAscoltatore(this);
         inizializzaInterfaccia();
         aggiornaNumeroDiMacchine(DEF_MACCHINE);
     }
-
 
     private void inizializzaInterfaccia() {
         setTitle("Gara di Macchine - Progetto Thread");
@@ -55,11 +52,11 @@ public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
         pannelloConfig.setLayout(new BoxLayout(pannelloConfig, BoxLayout.Y_AXIS));
         pannelloConfig.setBackground(Color.WHITE);
         pannelloConfig.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(new Color(180, 180, 180)),
-            "Configura Macchine",
-            javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
-            javax.swing.border.TitledBorder.DEFAULT_POSITION,
-            new Font("Arial", Font.BOLD, 12)));
+                BorderFactory.createLineBorder(new Color(180, 180, 180)),
+                "Configura Macchine",
+                javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
+                javax.swing.border.TitledBorder.DEFAULT_POSITION,
+                new Font("Arial", Font.BOLD, 12)));
 
         JScrollPane scrollConfig = new JScrollPane(pannelloConfig);
         scrollConfig.setBorder(null);
@@ -72,11 +69,11 @@ public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
         pannelloPista.setLayout(new BoxLayout(pannelloPista, BoxLayout.Y_AXIS));
         pannelloPista.setBackground(Color.WHITE);
         pannelloPista.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(new Color(180, 180, 180)),
-            "Pista",
-            javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
-            javax.swing.border.TitledBorder.DEFAULT_POSITION,
-            new Font("Arial", Font.BOLD, 12)));
+                BorderFactory.createLineBorder(new Color(180, 180, 180)),
+                "Pista",
+                javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
+                javax.swing.border.TitledBorder.DEFAULT_POSITION,
+                new Font("Arial", Font.BOLD, 12)));
 
         JScrollPane scrollPista = new JScrollPane(pannelloPista);
         scrollPista.setBorder(null);
@@ -98,11 +95,12 @@ public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
         lbl.setFont(new Font("Arial", Font.BOLD, 12));
         pnlAlto.add(lbl);
         spnNumeroDiMacchine = new JSpinner(
-            new SpinnerNumberModel(DEF_MACCHINE, MIN_MACCHINE, MAX_MACCHINE, 1));
+                new SpinnerNumberModel(DEF_MACCHINE, MIN_MACCHINE, MAX_MACCHINE, 1));
         spnNumeroDiMacchine.setPreferredSize(new Dimension(55, 24));
         spnNumeroDiMacchine.addChangeListener(e -> {
-            if (!garaInCorso)
+            if (!garaInCorso) {
                 aggiornaNumeroDiMacchine((int) spnNumeroDiMacchine.getValue());
+            }
         });
         pnlAlto.add(spnNumeroDiMacchine);
         pnl.add(pnlAlto, BorderLayout.NORTH);
@@ -120,7 +118,7 @@ public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
         pnlBottoni.setBackground(Color.WHITE);
         btnPartenza = bottoneColorato("Partenza!", new Color(0, 150, 70), Color.BLACK);
         btnPartenza.addActionListener(this::alClickPartenza);
-        btnStop     = bottoneColorato("Stop",      new Color(200, 40,  40), Color.BLACK);
+        btnStop = bottoneColorato("Stop", new Color(200, 40, 40), Color.BLACK);
         btnStop.setEnabled(false);
         btnStop.addActionListener(e -> fermaGara());
         pnlBottoni.add(btnPartenza);
@@ -129,7 +127,6 @@ public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
 
         return pnl;
     }
-
 
     private void aggiornaNumeroDiMacchine(int numero) {
         pannelliConfigurazione.clear();
@@ -143,9 +140,10 @@ public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
         pannelloConfig.repaint();
     }
 
-
     private void alClickPartenza(ActionEvent e) {
-        if (garaInCorso) return;
+        if (garaInCorso) {
+            return;
+        }
 
         gestoreGara.resetta();
         barre.clear();
@@ -154,7 +152,9 @@ public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
 
         for (PannelloConfigurazione cfg : pannelliConfigurazione) {
             ModelloVeicolo modello = cfg.getModelloSelezionato();
-            if (modello == null) continue;
+            if (modello == null) {
+                continue;
+            }
             boolean tuned = cfg.isTuned();
 
             BarraGara barra = new BarraGara(modello, tuned);
@@ -186,7 +186,6 @@ public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
         ripristinaControlli();
     }
 
-
     @Override
     public void alTermineMacchina(String nome, int posizione) {
         String pos = posizione == 1 ? "1°" : posizione == 2 ? "2°" : posizione == 3 ? "3°" : posizione + "°";
@@ -203,21 +202,21 @@ public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
                 String vincitore = risultatiFinali.get(0).replaceFirst("^1 posto - ", "");
                 // Unico uso di Unicode/emoji: la coppa nel dialogo del vincitore
                 JOptionPane.showMessageDialog(this,
-                    "\uD83C\uDFC6 Vincitore: " + vincitore,
-                    "Gara Terminata",
-                    JOptionPane.INFORMATION_MESSAGE);
+                        "\uD83C\uDFC6 Vincitore: " + vincitore,
+                        "Gara Terminata",
+                        JOptionPane.INFORMATION_MESSAGE);
             }
         });
     }
-
 
     private void aggiungiLog(String messaggio) {
         SwingUtilities.invokeLater(() -> logRisultati.append(messaggio));
     }
 
     private void setConfigurazioneAbilitata(boolean abilitata) {
-        for (PannelloConfigurazione pnl : pannelliConfigurazione)
+        for (PannelloConfigurazione pnl : pannelliConfigurazione) {
             pnl.setTuttoAbilitato(abilitata);
+        }
     }
 
     private void ripristinaControlli() {

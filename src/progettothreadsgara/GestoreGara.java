@@ -4,32 +4,40 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-
 public class GestoreGara {
 
     /**
      * Interfaccia implementata da FRM_Gara per ricevere notifiche dalla gara.
      */
     public interface AscoltatoreGara {
-        /** Chiamato quando una macchina taglia il traguardo */
+
+        /**
+         * Chiamato quando una macchina taglia il traguardo
+         */
         void alTermineMacchina(String nomeMacchina, int posizione);
-        /** Chiamato quando tutte le macchine hanno terminato */
+
+        /**
+         * Chiamato quando tutte le macchine hanno terminato
+         */
         void alTermineGara(List<String> risultatiFinali);
     }
 
-    private final List<Macchine>  macchine       = new ArrayList<>();
-    private final List<Thread>    thread         = new ArrayList<>();
-    private final AtomicInteger   posizioneArrivo = new AtomicInteger(0);
-    private final List<String>    risultati       = new ArrayList<>();
-    private AscoltatoreGara       ascoltatore;
-
-
-    /** Registra l'ascoltatore (solitamente FRM_Gara) */
-    public void setAscoltatore(AscoltatoreGara a) { this.ascoltatore = a; }
+    private final List<Macchine> macchine = new ArrayList<>();
+    private final List<Thread> thread = new ArrayList<>();
+    private final AtomicInteger posizioneArrivo = new AtomicInteger(0);
+    private final List<String> risultati = new ArrayList<>();
+    private AscoltatoreGara ascoltatore;
 
     /**
-     * Aggiunge una macchina alla gara e crea il Thread corrispondente.
-     * Il Thread non viene avviato qui, ma in avviaGara().
+     * Registra l'ascoltatore (solitamente FRM_Gara)
+     */
+    public void setAscoltatore(AscoltatoreGara a) {
+        this.ascoltatore = a;
+    }
+
+    /**
+     * Aggiunge una macchina alla gara e crea il Thread corrispondente. Il
+     * Thread non viene avviato qui, ma in avviaGara().
      *
      * @param macchina La macchina da aggiungere
      */
@@ -40,21 +48,25 @@ public class GestoreGara {
     }
 
     /**
-     * Avvia la gara: resetta lo stato e fa partire tutti i Thread.
-     * Da questo momento le macchine avanzano in parallelo.
+     * Avvia la gara: resetta lo stato e fa partire tutti i Thread. Da questo
+     * momento le macchine avanzano in parallelo.
      */
     public void avviaGara() {
         posizioneArrivo.set(0);
         risultati.clear();
-        for (Thread t : thread) t.start();
+        for (Thread t : thread) {
+            t.start();
+        }
     }
 
     /**
-     * Ferma la gara interrompendo tutti i Thread.
-     * Ogni Thread riceverà InterruptedException e uscirà dal ciclo.
+     * Ferma la gara interrompendo tutti i Thread. Ogni Thread riceverà
+     * InterruptedException e uscirà dal ciclo.
      */
     public void fermaGara() {
-        for (Thread t : thread) t.interrupt();
+        for (Thread t : thread) {
+            t.interrupt();
+        }
     }
 
     /**
@@ -66,8 +78,8 @@ public class GestoreGara {
      * @param macchina La macchina che ha tagliato il traguardo
      */
     public synchronized void notificaArrivo(Macchine macchina) {
-        int pos      = posizioneArrivo.incrementAndGet();
-        String ris   = pos + " posto - " + macchina.getNomeCompleto();
+        int pos = posizioneArrivo.incrementAndGet();
+        String ris = pos + " posto - " + macchina.getNomeCompleto();
         risultati.add(ris);
 
         if (ascoltatore != null) {
@@ -79,7 +91,9 @@ public class GestoreGara {
         }
     }
 
-    /** Resetta completamente per una nuova gara */
+    /**
+     * Resetta completamente per una nuova gara
+     */
     public void resetta() {
         fermaGara();
         macchine.clear();
@@ -88,5 +102,7 @@ public class GestoreGara {
         posizioneArrivo.set(0);
     }
 
-    public int getNumeroDiMacchine() { return macchine.size(); }
+    public int getNumeroDiMacchine() {
+        return macchine.size();
+    }
 }

@@ -13,8 +13,9 @@ public class ProgettoThreadsGara {
         // Imposta il look and feel del sistema operativo
         try {
             javax.swing.UIManager.setLookAndFeel(
-                javax.swing.UIManager.getSystemLookAndFeelClassName());
-        } catch (Exception ignorato) { }
+                    javax.swing.UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception ignorato) {
+        }
 
         // Crea e mostra la finestra sull'EDT
         java.awt.EventQueue.invokeLater(() -> new FRM_Gara().setVisible(true));
