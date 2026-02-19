@@ -4,11 +4,8 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * Pannello di configurazione per una singola macchina. Contiene: etichetta
- * "Macchina N", ComboBox categoria, ComboBox modello, Radio Normale/Tuned.
- *
- * ComboBox a cascata: quando cambia la categoria, la ComboBox dei modelli si
- * aggiorna automaticamente mostrando solo i modelli di quella categoria.
+ * Pannello di configurazione per una macchina: categoria, modello,
+ * normale/tuned
  */
 public class PannelloConfigurazione extends JPanel {
 
@@ -46,7 +43,6 @@ public class PannelloConfigurazione extends JPanel {
         cbModello.setPreferredSize(new Dimension(190, 24));
         cbModello.setFont(new Font("Arial", Font.PLAIN, 12));
         popolaModelli();
-        // Aggiorna i modelli ogni volta che cambia la categoria
         cbCategoria.addActionListener(e -> popolaModelli());
         add(cbModello);
 
@@ -64,9 +60,6 @@ public class PannelloConfigurazione extends JPanel {
         add(rbTuned);
     }
 
-    /**
-     * Popola la ComboBox dei modelli in base alla categoria selezionata
-     */
     private void popolaModelli() {
         CategoriaVeicolo cat = (CategoriaVeicolo) cbCategoria.getSelectedItem();
         cbModello.removeAllItems();
@@ -85,10 +78,6 @@ public class PannelloConfigurazione extends JPanel {
         return rbTuned.isSelected();
     }
 
-    /**
-     * Abilita o disabilita tutti i controlli (durante la gara vengono
-     * disabilitati)
-     */
     public void setTuttoAbilitato(boolean abilitato) {
         cbCategoria.setEnabled(abilitato);
         cbModello.setEnabled(abilitato);

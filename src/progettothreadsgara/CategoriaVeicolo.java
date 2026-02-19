@@ -1,9 +1,7 @@
 package progettothreadsgara;
 
 /**
- * Raggruppa le macchine in categorie solo per la ComboBox a cascata. La
- * velocità reale di ogni macchina è definita in ModelloVeicolo, non qui: questa
- * enum serve solo come "etichetta di gruppo".
+ * Categorie per il raggruppamento nella ComboBox a cascata
  */
 public enum CategoriaVeicolo {
     DA_CORSA("Auto da Corsa"),

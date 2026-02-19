@@ -5,23 +5,21 @@ import javax.swing.SwingUtilities;
 import java.awt.*;
 import java.net.URL;
 
+/**
+ * Barra di avanzamento con immagine della macchina che si muove. Le immagini
+ * vengono caricate da /Immagini/ nel classpath (in NetBeans: src/Immagini/).
+ * aggiornaValore() usa invokeLater() per thread-safety.
+ */
 public class BarraGara extends JPanel {
 
-    // Larghezza riservata all'immagine a destra della barra
     private static final int LARGHEZZA_IMMAGINE = 100;
-    // Altezza preferita del componente
     private static final int ALTEZZA_PREFERITA = 56;
 
-    private int valore = 0;         // 0..100
+    private int valore = 0;
     private Color colore;
-    private String etichetta;            // nome della macchina
-    private Image immagineMacchina;     // immagine caricata dal classpath
+    private String etichetta;
+    private Image immagineMacchina;
 
-    /**
-     * @param modello Il modello della macchina (determina colore, nome e
-     * immagine)
-     * @param tuned Se true, aggiunge "(Tuned)" all'etichetta
-     */
     public BarraGara(ModelloVeicolo modello, boolean tuned) {
         this.colore = modello.getColore();
         this.etichetta = modello.getNome() + (tuned ? " (Tuned)" : "");
@@ -29,19 +27,9 @@ public class BarraGara extends JPanel {
         setBackground(Color.WHITE);
         setPreferredSize(new Dimension(400, ALTEZZA_PREFERITA));
         setMinimumSize(new Dimension(150, ALTEZZA_PREFERITA));
-
         caricaImmagine(modello.getNomeFile());
     }
 
-    /**
-     * Carica l'immagine dal classpath in /Immagini/<nomeFile>. In NetBeans:
-     * metti i file in src/Immagini/ → vengono copiati nel classpath.
-     *
-     * Se l'immagine non esiste, immagineMacchina rimane null e verrà usata una
-     * sagoma colorata di riserva.
-     *
-     * @param nomeFile Nome del file PNG (es. "Ferrari_F40.png")
-     */
     private void caricaImmagine(String nomeFile) {
         try {
             URL urlImmagine = getClass().getResource("/Immagini/" + nomeFile);
@@ -49,16 +37,10 @@ public class BarraGara extends JPanel {
                 immagineMacchina = new javax.swing.ImageIcon(urlImmagine).getImage();
             }
         } catch (Exception e) {
-            immagineMacchina = null; // usa sagoma di riserva
+            immagineMacchina = null;
         }
     }
 
-    /**
-     * Aggiorna il valore e ridisegna la barra. DEVE usare invokeLater() perché
-     * viene chiamato dai thread delle macchine, non dall'EDT di Swing.
-     *
-     * @param nuovoValore Valore da 0 a 100
-     */
     public void aggiornaValore(int nuovoValore) {
         SwingUtilities.invokeLater(() -> {
             this.valore = nuovoValore;
@@ -66,9 +48,6 @@ public class BarraGara extends JPanel {
         });
     }
 
-    /**
-     * Resetta a 0 tra una gara e l'altra
-     */
     public void resetta() {
         SwingUtilities.invokeLater(() -> {
             this.valore = 0;
@@ -76,9 +55,6 @@ public class BarraGara extends JPanel {
         });
     }
 
-    /**
-     * Disegna l'intera barra + immagine mobile della macchina.
-     */
     @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -93,53 +69,42 @@ public class BarraGara extends JPanel {
         int margineY = 5;
         int altezzaBarra = altezzaTotale - margineY * 2;
 
-        // 1. Sfondo grigio chiaro della barra
+        // Sfondo grigio
         g2.setColor(new Color(220, 220, 220));
         g2.fillRoundRect(0, margineY, larghezzaBarra, altezzaBarra, 8, 8);
 
-        // 2. Barra colorata proporzionale al progresso
+        // Barra colorata
         int larghezzaColorata = (int) Math.round(larghezzaBarra * valore / 100.0);
         if (larghezzaColorata > 0) {
             g2.setColor(colore);
             g2.fillRoundRect(0, margineY, larghezzaColorata, altezzaBarra, 8, 8);
         }
 
-        // 3. Testo con il nome della macchina — centrato nella barra
+        // Testo centrato
         g2.setFont(new Font("Arial", Font.BOLD, 12));
         FontMetrics fm = g2.getFontMetrics();
         int testoX = (larghezzaBarra - fm.stringWidth(etichetta)) / 2;
         int testoY = margineY + (altezzaBarra + fm.getAscent() - fm.getDescent()) / 2;
-        // Ombra nera semitrasparente per leggibilità su qualsiasi sfondo
         g2.setColor(new Color(0, 0, 0, 70));
         g2.drawString(etichetta, testoX + 1, testoY + 1);
         g2.setColor(Color.WHITE);
         g2.drawString(etichetta, testoX, testoY);
 
-        // 4. Immagine (o sagoma) posizionata alla fine della barra colorata
-        //    xImmagine si muove con il progresso → effetto "macchina che corre"
+        // Immagine che si muove con il progresso
         int xImmagine = larghezzaColorata;
         int yImmagine = margineY;
         int wImg = LARGHEZZA_IMMAGINE;
         int hImg = altezzaBarra;
 
         if (immagineMacchina != null) {
-            // Disegna l'immagine reale ridimensionata all'area dell'icona
             g2.drawImage(immagineMacchina, xImmagine, yImmagine, wImg, hImg, null);
         } else {
-            // Sagoma di riserva se l'immagine non è disponibile
             disegnaSagoma(g2, xImmagine, yImmagine, wImg, hImg);
         }
 
         g2.dispose();
     }
 
-    /**
-     * Sagoma di riserva usata se l'immagine reale non è disponibile. Disegna
-     * una semplice macchina stilizzata con Graphics2D.
-     *
-     * Per sostituire con un'immagine esterna: Image img = ImageIO.read(new
-     * File("percorso/auto.png")); g2.drawImage(img, x, y, w, h, null);
-     */
     private void disegnaSagoma(Graphics2D g2, int x, int y, int w, int h) {
         int margine = 4;
         int altCarro = h - margine * 2;
@@ -148,20 +113,17 @@ public class BarraGara extends JPanel {
         int fondoCarr = y + h - margine - rRuota;
         int altCarr = fondoCarr - topCofano;
 
-        // Carrozzeria
         g2.setColor(colore.darker());
         g2.fillRect(x + 2, topCofano + altCarr / 2, w - 4, altCarr / 2);
         int[] xp = {x + 5, x + 9, x + w - 6, x + w - 3};
         int[] yp = {topCofano + altCarr / 2, topCofano, topCofano, topCofano + altCarr / 2};
         g2.fillPolygon(xp, yp, 4);
 
-        // Contorno
         g2.setColor(colore.darker().darker());
         g2.setStroke(new BasicStroke(1f));
         g2.drawRect(x + 2, topCofano + altCarr / 2, w - 4, altCarr / 2);
         g2.drawPolygon(xp, yp, 4);
 
-        // Ruote
         g2.setColor(Color.DARK_GRAY);
         g2.fillOval(x + 3, fondoCarr - rRuota, rRuota * 2, rRuota * 2);
         g2.fillOval(x + w - 3 - rRuota * 2, fondoCarr - rRuota, rRuota * 2, rRuota * 2);

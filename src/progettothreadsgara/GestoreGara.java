@@ -4,21 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * Gestisce la gara e calcola i distacchi in secondi.
+ */
 public class GestoreGara {
 
-    /**
-     * Interfaccia implementata da FRM_Gara per ricevere notifiche dalla gara.
-     */
     public interface AscoltatoreGara {
 
-        /**
-         * Chiamato quando una macchina taglia il traguardo
-         */
-        void alTermineMacchina(String nomeMacchina, int posizione);
+        void alTermineMacchina(String nomeMacchina, int posizione, double tempoSecondi, double distaccoSecondi);
 
-        /**
-         * Chiamato quando tutte le macchine hanno terminato
-         */
         void alTermineGara(List<String> risultatiFinali);
     }
 
@@ -27,79 +21,62 @@ public class GestoreGara {
     private final AtomicInteger posizioneArrivo = new AtomicInteger(0);
     private final List<String> risultati = new ArrayList<>();
     private AscoltatoreGara ascoltatore;
+    private double tempoPrimo = 0;
 
-    /**
-     * Registra l'ascoltatore (solitamente FRM_Gara)
-     */
     public void setAscoltatore(AscoltatoreGara a) {
         this.ascoltatore = a;
     }
 
-    /**
-     * Aggiunge una macchina alla gara e crea il Thread corrispondente. Il
-     * Thread non viene avviato qui, ma in avviaGara().
-     *
-     * @param macchina La macchina da aggiungere
-     */
     public void aggiungeMacchina(Macchine macchina) {
         macchine.add(macchina);
-        // Il nome del thread è utile per il debug
         thread.add(new Thread(macchina, macchina.getNomeCompleto()));
     }
 
-    /**
-     * Avvia la gara: resetta lo stato e fa partire tutti i Thread. Da questo
-     * momento le macchine avanzano in parallelo.
-     */
     public void avviaGara() {
         posizioneArrivo.set(0);
         risultati.clear();
+        tempoPrimo = 0;
         for (Thread t : thread) {
             t.start();
         }
     }
 
-    /**
-     * Ferma la gara interrompendo tutti i Thread. Ogni Thread riceverà
-     * InterruptedException e uscirà dal ciclo.
-     */
     public void fermaGara() {
         for (Thread t : thread) {
             t.interrupt();
         }
     }
 
-    /**
-     * Chiamato da una Macchina quando raggiunge progresso == 100.
-     *
-     * synchronized: garantisce che due macchine che arrivano nello stesso
-     * millisecondo non ottengano la stessa posizione.
-     *
-     * @param macchina La macchina che ha tagliato il traguardo
-     */
-    public synchronized void notificaArrivo(Macchine macchina) {
+    public synchronized void notificaArrivo(Macchine macchina, double tempoSecondi) {
         int pos = posizioneArrivo.incrementAndGet();
-        String ris = pos + " posto - " + macchina.getNomeCompleto();
+
+        if (pos == 1) {
+            tempoPrimo = tempoSecondi;
+        }
+
+        double distacco = pos == 1 ? 0 : tempoSecondi - tempoPrimo;
+        String ris = String.format("%d posto - %s - %.1fs%s",
+                pos,
+                macchina.getNomeCompleto(),
+                tempoSecondi,
+                pos == 1 ? "" : String.format(" [+%.1fs]", distacco));
         risultati.add(ris);
 
         if (ascoltatore != null) {
-            ascoltatore.alTermineMacchina(macchina.getNomeCompleto(), pos);
-            // Se tutte le macchine sono arrivate, notifica il completamento
+            ascoltatore.alTermineMacchina(macchina.getNomeCompleto(), pos, tempoSecondi, distacco);
             if (pos == macchine.size()) {
                 ascoltatore.alTermineGara(new ArrayList<>(risultati));
             }
         }
     }
 
-    /**
-     * Resetta completamente per una nuova gara
-     */
     public void resetta() {
         fermaGara();
         macchine.clear();
         thread.clear();
         risultati.clear();
         posizioneArrivo.set(0);
+        tempoPrimo = 0;
     }
 
     public int getNumeroDiMacchine() {

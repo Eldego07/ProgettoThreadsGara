@@ -6,6 +6,9 @@ import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Frame principale dell'applicazione "Gara di Macchine"
+ */
 public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
 
     private static final int MIN_MACCHINE = 2;
@@ -47,7 +50,6 @@ public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
         pnlSinistra.setBackground(Color.WHITE);
         radice.add(pnlSinistra, BorderLayout.CENTER);
 
-        // Sezione configurazione (in alto a sinistra)
         pannelloConfig = new JPanel();
         pannelloConfig.setLayout(new BoxLayout(pannelloConfig, BoxLayout.Y_AXIS));
         pannelloConfig.setBackground(Color.WHITE);
@@ -64,7 +66,6 @@ public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
         scrollConfig.getViewport().setBackground(Color.WHITE);
         pnlSinistra.add(scrollConfig, BorderLayout.NORTH);
 
-        // Sezione pista (barre di avanzamento, in basso a sinistra)
         pannelloPista = new JPanel();
         pannelloPista.setLayout(new BoxLayout(pannelloPista, BoxLayout.Y_AXIS));
         pannelloPista.setBackground(Color.WHITE);
@@ -187,9 +188,12 @@ public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
     }
 
     @Override
-    public void alTermineMacchina(String nome, int posizione) {
+    public void alTermineMacchina(String nome, int posizione, double tempoSecondi, double distaccoSecondi) {
         String pos = posizione == 1 ? "1°" : posizione == 2 ? "2°" : posizione == 3 ? "3°" : posizione + "°";
-        SwingUtilities.invokeLater(() -> logRisultati.append(pos + " - " + nome + "\n"));
+        String tempo = String.format("%.1fs", tempoSecondi);
+        String distacco = posizione == 1 ? "" : String.format(" [+%.1fs]", distaccoSecondi);
+        SwingUtilities.invokeLater(()
+                -> logRisultati.append(pos + " - " + nome + " - " + tempo + distacco + "\n"));
     }
 
     @Override
@@ -200,7 +204,6 @@ public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
             ripristinaControlli();
             if (!risultatiFinali.isEmpty()) {
                 String vincitore = risultatiFinali.get(0).replaceFirst("^1 posto - ", "");
-                // Unico uso di Unicode/emoji: la coppa nel dialogo del vincitore
                 JOptionPane.showMessageDialog(this,
                         "\uD83C\uDFC6 Vincitore: " + vincitore,
                         "Gara Terminata",
