@@ -36,7 +36,7 @@ public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
     private void inizializzaInterfaccia() {
         setTitle("Gara di Macchine - Progetto Thread");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
-        setSize(880, 580);
+        setSize(880, 660);
         setMinimumSize(new Dimension(780, 480));
         setLocationRelativeTo(null);
         getContentPane().setBackground(Color.WHITE);
@@ -62,7 +62,7 @@ public class FRM_Gara extends JFrame implements GestoreGara.AscoltatoreGara {
 
         JScrollPane scrollConfig = new JScrollPane(pannelloConfig);
         scrollConfig.setBorder(null);
-        scrollConfig.setPreferredSize(new Dimension(0, 190));
+        scrollConfig.setPreferredSize(new Dimension(0, 220));
         scrollConfig.getViewport().setBackground(Color.WHITE);
         pnlSinistra.add(scrollConfig, BorderLayout.NORTH);
 
